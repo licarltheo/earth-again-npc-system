@@ -1,0 +1,355 @@
+# BP_NPC_Base_v01 - Blueprint Graph Implementation
+# Copy this into Unreal Engine Blueprint Editor
+
+## Event Graph
+
+### BeginPlay Event
+```
+Event BeginPlay
+├── Set CurrentState = Idle
+├── Set LastSpawnTime = Now
+├── Set HomeLocation = GetActorLocation()
+├── Set HomeRotation = GetActorRotation()
+├── Set InteractionCooldown = 30.0
+├── Set Reputation = 0.5
+├── Set bIsInteractable = true
+├── Set bIsInDanger = false
+├── Set Aggressor = None
+├── Set NPCName = "NPC"
+├── Set NPCRole = Citizen
+├── Set NPCDistrict = NewAccra
+├── Set IsKeyNPC = false
+├── Set IsPersistent = true
+├── Set CurrentState = Idle
+├── Call DialogueComponent.InitializeDialogue(NPCName, DialogueIDs)
+├── Call QuestComponent.InitializeQuests(QuestIDs)
+└── Call BehaviorTreeComponent.StartTree(BehaviorTree)
+```
+
+### Tick Event
+```
+Event Tick(DeltaSeconds)
+├── Call BehaviorTreeComponent.Update()
+├── Call DialogueComponent.Tick(DeltaSeconds)
+├── Call QuestComponent.Tick(DeltaSeconds)
+├── Call UpdateStateMachine(DeltaSeconds)
+└── If InteractionCooldown > 0.0
+    └── Subtract DeltaSeconds from InteractionCooldown
+```
+
+### OnConstruction Event
+```
+Event OnConstruction(Transform)
+├── Call UpdateAppearance()
+├── Set HomeLocation = GetActorLocation()
+├── Set HomeRotation = GetActorRotation()
+├── Call DialogueComponent.InitializeDialogue(NPCName, DialogueIDs)
+└── Call BehaviorTreeComponent.StartTree(BehaviorTree)
+```
+
+### Destroyed Event
+```
+Event Destroyed
+├── If IsPersistent
+│   └── Call UnregisterPersistentNPC()
+├── Call QuestComponent.HideQuestMarker()
+└── Call DialogueComponent.EndDialogue()
+```
+
+## Functions
+
+### SetNPCRole(NewRole)
+```
+Function SetNPCRole(NewRole)
+├── Set NPCRole = NewRole
+├── Call UpdateDialogueIDs()
+└── Call UpdateAppearance()
+```
+
+### SetNPCDistrict(NewDistrict)
+```
+Function SetNPCDistrict(NewDistrict)
+├── Set NPCDistrict = NewDistrict
+├── Call UpdateAppearance()
+└── Call UpdateDialogueIDs()
+```
+
+### SetState(NewState)
+```
+Function SetState(NewState)
+├── Set CurrentState = NewState
+├── Call BehaviorTreeComponent.SetState(NewState)
+├── Call UpdateAnimationState()
+└── Call QuestComponent.UpdateQuestMarkerVisibility()
+```
+
+### GetHomeLocation()
+```
+Function GetHomeLocation() -> Vector
+└── Return HomeLocation
+```
+
+### SetHomeLocation(Location)
+```
+Function SetHomeLocation(Location)
+├── Set HomeLocation = Location
+└── Return
+```
+
+### IsAvailableForInteraction() -> Boolean
+```
+Function IsAvailableForInteraction() -> Boolean
+├── If CurrentState == Working or CurrentState == Sleeping or CurrentState == Combat or CurrentState == Fleeing
+│   └── Return false
+├── If InteractionCooldown > 0.0
+│   └── Return false
+├── If bIsInteractable == false
+│   └── Return false
+└── Return true
+```
+
+### OnPlayerProximity(Player)
+```
+Function OnPlayerProximity(Player)
+├── Calculate Distance = GetActorLocation() - Player.GetActorLocation()
+├── If Distance < 500.0
+│   ├── If InteractionCooldown > 0.0
+│   │   └── Return
+│   ├── If IsAvailableForInteraction() == false
+│   │   └── Return
+│   ├── Call DialogueComponent.StartDialogue(Player)
+│   ├── Call PlayGreetingAnimation()
+│   └── Set InteractionCooldown = 30.0
+└── Return
+```
+
+### OnPlayerFar()
+```
+Function OnPlayerFar()
+├── Call DialogueComponent.EndDialogue()
+└── Set CurrentState = Idle
+```
+
+### OnDamage(DamageAmount, DamageCauser)
+```
+Function OnDamage(DamageAmount, DamageCauser)
+├── Set CurrentState = Fleeing
+├── Call CallForHelp()
+└── Call FleeFromDanger(DamageCauser)
+```
+
+### OnDeath()
+```
+Function OnDeath()
+├── If IsPersistent
+│   └── Call UnregisterPersistentNPC()
+├── Call QuestComponent.HideQuestMarker()
+└── Call DialogueComponent.EndDialogue()
+```
+
+### OnQuestComplete(QuestID)
+```
+Function OnQuestComplete(QuestID)
+├── Call AddReputation(0.5)
+└── Call QuestComponent.OnQuestComplete(QuestID)
+```
+
+### GetReputation() -> Float
+```
+Function GetReputation() -> Float
+└── Return Reputation
+```
+
+### AddReputation(Amount)
+```
+Function AddReputation(Amount)
+├── Set Reputation = Reputation + Amount
+├── If Reputation > 1.0
+│   └── Set Reputation = 1.0
+├── If Reputation < 0.0
+│   └── Set Reputation = 0.0
+└── Call QuestComponent.OnReputationChange(Reputation)
+```
+
+### RemoveReputation(Amount)
+```
+Function RemoveReputation(Amount)
+├── Set Reputation = Reputation - Amount
+├── If Reputation > 1.0
+│   └── Set Reputation = 1.0
+├── If Reputation < 0.0
+│   └── Set Reputation = 0.0
+└── Call QuestComponent.OnReputationChange(Reputation)
+```
+
+### GetCurrentState() -> ENPCState
+```
+Function GetCurrentState() -> ENPCState
+└── Return CurrentState
+```
+
+### GetNPCRole() -> ENPCRole
+```
+Function GetNPCRole() -> ENPCRole
+└── Return NPCRole
+```
+
+### GetNPCDistrict() -> ENPCDistrict
+```
+Function GetNPCDistrict() -> ENPCDistrict
+└── Return NPCDistrict
+```
+
+### GetNPCName() -> String
+```
+Function GetNPCName() -> String
+└── Return NPCName
+```
+
+### UpdateAppearance()
+```
+Function UpdateAppearance()
+├── If NPCRole == Citizen
+│   └── Set Mesh to Citizen Mesh
+├── If NPCRole == Student
+│   └── Set Mesh to Student Mesh
+├── If NPCRole == Vendor
+│   └── Set Mesh to Vendor Mesh
+├── If NPCRole == Police
+│   └── Set Mesh to Police Mesh
+├── If NPCRole == GangMember
+│   └── Set Mesh to GangMember Mesh
+├── If NPCRole == Government
+│   └── Set Mesh to Government Mesh
+├── If NPCRole == CircleAgent
+│   └── Set Mesh to CircleAgent Mesh
+└── If NPCRole == FamilyMember
+    └── Set Mesh to FamilyMember Mesh
+```
+
+### UpdateDialogueIDs()
+```
+Function UpdateDialogueIDs()
+├── If NPCRole == Citizen
+│   └── Set DialogueIDs to CitizenDialogueIDs
+├── If NPCRole == Student
+│   └── Set DialogueIDs to StudentDialogueIDs
+├── If NPCRole == Vendor
+│   └── Set DialogueIDs to VendorDialogueIDs
+├── If NPCRole == Police
+│   └── Set DialogueIDs to PoliceDialogueIDs
+├── If NPCRole == GangMember
+│   �└── Set DialogueIDs to GangMemberDialogueIDs
+├── If NPCRole == Government
+│   └── Set DialogueIDs to GovernmentDialogueIDs
+├── If NPCRole == CircleAgent
+│   └── Set DialogueIDs to CircleAgentDialogueIDs
+└── If NPCRole == FamilyMember
+    └── Set DialogueIDs to FamilyMemberDialogueIDs
+```
+
+### UpdateAnimationState()
+```
+Function UpdateAnimationState()
+├── If CurrentState == Idle
+│   └── Call PlayIdleAnimation()
+├── If CurrentState == Walking
+│   └── Call PlayWalkAnimation()
+├── If CurrentState == Working
+│   └── Call PlayWorkAnimation()
+├── If CurrentState == Sleeping
+│   └── Call PlaySleepAnimation()
+├── If CurrentState == Dialogue
+│   └── Call PlayDialogueAnimation()
+├── If CurrentState == Combat
+│   └── Call PlayCombatAnimation()
+├── If CurrentState == Fleeing
+│   └── Call PlayFleeAnimation()
+└── If CurrentState == Questing
+    └── Call PlayQuestAnimation()
+```
+
+### PlayGreetingAnimation()
+```
+Function PlayGreetingAnimation()
+├── If NPCRole == Citizen
+│   └── Call PlayGestureAnimation("Greeting_Handshake")
+├── If NPCRole == Student
+│   └── Call PlayGestureAnimation("Greeting_Nod")
+├── If NPCRole == Vendor
+│   └── Call PlayGestureAnimation("Greeting_Nod")
+├── If NPCRole == Police
+│   └── Call PlayGestureAnimation("Greeting_Nod")
+├── If NPCRole == GangMember
+│   └── Call PlayGestureAnimation("Greeting_Nod")
+├── If NPCRole == Government
+│   └── Call PlayGestureAnimation("Greeting_Nod")
+├── If NPCRole == CircleAgent
+│   └── Call PlayGestureAnimation("Greeting_Nod")
+└── If NPCRole == FamilyMember
+    └── Call PlayGestureAnimation("Greeting_Nod")
+```
+
+### CallForHelp()
+```
+Function CallForHelp()
+├── If NPCRole == Citizen
+│   └── Call PlayGestureAnimation("CallForHelp")
+├── If NPCRole == Student
+│   └── Call PlayGestureAnimation("CallForHelp")
+├── If NPCRole == Vendor
+│   └── Call PlayGestureAnimation("CallForHelp")
+├── If NPCRole == Police
+│   └── Call PlayGestureAnimation("CallForHelp")
+├── If NPCRole == GangMember
+│   └── Call PlayGestureAnimation("CallForHelp")
+├── If NPCRole == Government
+│   └── Call PlayGestureAnimation("CallForHelp")
+├── If NPCRole == CircleAgent
+│   └── Call PlayGestureAnimation("CallForHelp")
+└── If NPCRole == FamilyMember
+    └── Call PlayGestureAnimation("CallForHelp")
+```
+
+### FleeFromDanger(Aggressor)
+```
+Function FleeFromDanger(Aggressor)
+├── If NPCRole == Citizen
+│   └── Call PlayFleeAnimation()
+├── If NPCRole == Student
+│   └── Call PlayFleeAnimation()
+├── If NPCRole == Vendor
+│   └── Call PlayFleeAnimation()
+├── If NPCRole == Police
+│   └── Call PlayFleeAnimation()
+├── If NPCRole == GangMember
+│   └── Call PlayFleeAnimation()
+├── If NPCRole == Government
+│   └── Call PlayFleeAnimation()
+├── If NPCRole == CircleAgent
+│   └── Call PlayFleeAnimation()
+└── If NPCRole == FamilyMember
+    └── Call PlayFleeAnimation()
+```
+
+### UpdateStateMachine(DeltaSeconds)
+```
+Function UpdateStateMachine(DeltaSeconds)
+├── If CurrentState == Idle
+│   └── Call BehaviorTreeComponent.SelectSubtree(Subtree_IdleHandler)
+├── If CurrentState == Walking
+│   └── Call BehaviorTreeComponent.SelectSubtree(Subtree_RoutineHandler)
+├── If CurrentState == Working
+│   └── Call BehaviorTreeComponent.SelectSubtree(Subtree_RoutineHandler)
+├── If CurrentState == Sleeping
+│   └── Call BehaviorTreeComponent.SelectSubtree(Subtree_RoutineHandler)
+├── If CurrentState == Dialogue
+│   └── Call BehaviorTreeComponent.SelectSubtree(Subtree_InteractionHandler)
+├── If CurrentState == Combat
+│   └── Call BehaviorTreeComponent.SelectSubtree(Subtree_DangerHandler)
+├── If CurrentState == Fleeing
+│   └── Call BehaviorTreeComponent.SelectSubtree(Subtree_DangerHandler)
+└── If CurrentState == Questing
+    └── Call BehaviorTreeComponent.SelectSubtree(Subtree_InteractionHandler)
+```
+```
