@@ -1,0 +1,35 @@
+UE5 Data Asset - DT_NPC_SpawnPool_NewAccra_v01
+================================================
+
+This is a Data Asset that contains spawn pool data for New Accra district.
+
+To create this data asset in Unreal Engine 5.2+:
+1. Right-click in Content Browser
+2. Search for "Data Asset"
+3. Select "DT_NPC_SpawnPool"
+4. Click "Create"
+5. Name it "DT_NPC_SpawnPool_NewAccra_v01"
+
+Properties:
+- SpawnPools (Array of FSpawnPoolData)
+- KeyNPCNames (Array of FString)
+- KeyNPCLocations (Map of FString to FVector)
+- KeyNPCRotations (Map of FString to FRotator)
+
+Spawn Pool Data:
+- District: NewAccra
+- RolePool: Citizen, Vendor, Government, CircleAgent
+- NPCTypes: Array of NPC types
+- SpawnPoints: Array of spawn locations
+- MaxPopulation: 100
+- SpawnRate: 60.0f
+- Time Filters: Morning, Afternoon, Evening, Night
+
+Key NPCs:
+- AuntieEfua (Vendor)
+- BabaHassan (Government)
+- Kwame (GangMember)
+
+Note: This data asset must be configured by designers.
+Note: This data asset requires spawn points from level designers.
+Note: This data asset requires persistent NPC locations from designers.
