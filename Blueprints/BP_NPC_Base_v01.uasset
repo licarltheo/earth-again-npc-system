@@ -1,0 +1,62 @@
+UE5 Blueprint File - BP_NPC_Base_v01
+========================================
+
+This is a Blueprint Class that extends ANPC_Base (C++ class).
+
+To create this blueprint in Unreal Engine 5.2+:
+1. Right-click in Content Browser
+2. Search for "ANPC_Base"
+3. Select "BP_NPC_Base_v01"
+4. Click "Create"
+
+Components:
+- CharacterMesh (SkeletalMeshComponent)
+- DialogueComponent (UDialogueComponent)
+- QuestComponent (UQuestComponent)
+- BehaviorTreeComponent (UBehaviorTreeComponent)
+- BlackboardComponent (UBlackboardComponent)
+- AIController (AIController)
+- CapsuleComponent (Collision)
+- SceneComponent (Root)
+
+Variables:
+- NPCName (String)
+- NPCRole (Enum: Citizen, Student, Vendor, Police, GangMember, Government, CircleAgent, FamilyMember)
+- NPCDistrict (Enum: Riverside, Kumasi, CapeCoast, NewAccra, Tamale, CircleFoundation)
+- CurrentState (Enum: Idle, Walking, Working, Sleeping, Dialogue, Combat, Fleeing, Questing)
+- IsKeyNPC (Boolean)
+- IsPersistent (Boolean)
+- HomeLocation (Vector)
+- HomeRotation (Rotator)
+- Reputation (Float)
+- InteractionCooldown (Float)
+
+Events:
+- BeginPlay()
+- Tick(float DeltaTime)
+- OnConstruction(const FTransform& Transform)
+- Destroyed()
+
+Functions:
+- SetNPCRole(ENPCRole)
+- SetNPCDistrict(ENPCDistrict)
+- SetState(ENPCState)
+- GetHomeLocation() -> Vector
+- SetHomeLocation(Vector)
+- IsAvailableForInteraction() -> Boolean
+- OnPlayerProximity(ACharacter*)
+- OnPlayerFar()
+- OnDamage(float, AActor*)
+- OnDeath()
+- OnQuestComplete(FString)
+- GetReputation() -> Float
+- AddReputation(float)
+- RemoveReputation(float)
+- GetCurrentState() -> ENPCState
+- GetNPCRole() -> ENPCRole
+- GetNPCDistrict() -> ENPCDistrict
+- GetNPCName() -> String
+
+Note: This blueprint must be compiled after adding components.
+Note: This blueprint requires meshes from 3D artists.
+Note: This blueprint requires animations from animators.
