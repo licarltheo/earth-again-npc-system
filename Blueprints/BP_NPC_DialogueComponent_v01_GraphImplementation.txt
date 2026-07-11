@@ -1,0 +1,130 @@
+# BP_NPC_DialogueComponent_v01 - Blueprint Graph Implementation
+# Copy this into Unreal Engine Blueprint Editor
+
+## Event Graph
+
+### BeginPlay Event
+```
+Event BeginPlay
+├── Set CurrentState to Idle
+├── Set Reputation to 0.5
+├── Set InteractionCooldown to 30.0
+├── Set DialogueHistory to Empty
+├── Set AvailableQuests to Empty
+└── Set CurrentDialogueID to Empty
+```
+
+### Tick Event
+```
+Event Tick(DeltaSeconds)
+├── If InteractionCooldown > 0.0
+│   └── Subtract DeltaSeconds from InteractionCooldown
+└── If CurrentState == Processing
+    └── Call ProcessDialogue(CurrentDialogueID)
+```
+
+## Functions
+
+### InitializeDialogue(NPCName, DialogueIDs)
+```
+Function InitializeDialogue(NPCName, DialogueIDs)
+├── Set NPCName to NPCName
+├── Set DialogueTree to DialogueIDs
+├── Set DialogueHistory to Empty
+└── Set AvailableQuests to Empty
+```
+
+### StartDialogue(Player)
+```
+Function StartDialogue(Player)
+├── If CurrentState == Active
+│   └── Return
+├── If InteractionCooldown > 0.0
+│   └── Return
+├── If CheckQuestAvailability("") == false
+│   └── Return
+├── Set CurrentState to Active
+├── Set InteractionCooldown to 30.0
+├── Call PlayGreetingAnimation()
+├── Call ShowDialogueWidget()
+├── Set CurrentDialogueID to FirstDialogueNode
+└── Call ProcessDialogue(CurrentDialogueID)
+```
+
+### ProcessDialogue(NodeID)
+```
+Function ProcessDialogue(NodeID)
+├── If CurrentState != Active
+│   └── Return
+├── Set CurrentState to Processing
+├── Find DialogueNode by NodeID
+├── If DialogueNode == null
+│   └── Set CurrentState to Idle
+│       └── Return
+├── Add NodeID to DialogueHistory
+├── Set Reputation to Reputation + DialogueNode.ReputationChange
+├── If Reputation > 1.0
+│   └── Set Reputation to 1.0
+├── If Reputation < 0.0
+│   └── Set Reputation to 0.0
+├── If DialogueNode.bIsQuestStart
+│   └── Call StartQuest(DialogueNode.QuestID)
+├── If DialogueNode.bIsQuestUpdate
+│   └── Call UpdateQuest(DialogueNode.QuestID)
+├── If DialogueNode.bIsQuestComplete
+│   └── Call CompleteQuest(DialogueNode.QuestID)
+├── If DialogueNode.NextNodes.Num() > 0
+│   └── Set CurrentDialogueID to DialogueNode.NextNodes[0]
+│       └── Call ShowDialogueWidget()
+│       └── Call ProcessDialogue(CurrentDialogueID)
+└── If DialogueNode.NextNodes.Num() == 0
+    └── Call EndDialogue()
+```
+
+### EndDialogue()
+```
+Function EndDialogue()
+├── Set CurrentState to Idle
+├── Call HideDialogueWidget()
+└── Call PlayIdleAnimation()
+```
+
+### UpdateReputation(Delta)
+```
+Function UpdateReputation(Delta)
+├── Set Reputation to Reputation + Delta
+├── If Reputation > 1.0
+│   └── Set Reputation to 1.0
+└── If Reputation < 0.0
+    └── Set Reputation to 0.0
+```
+
+### CheckQuestAvailability(QuestID)
+```
+Function CheckQuestAvailability(QuestID)
+├── If bIsQuestGiver == false
+│   └── Return false
+├── If ReputationRequired > 0.0
+│   └── If Reputation < ReputationRequired
+│       └── Return false
+└── Return true
+```
+
+### GetAvailableQuests()
+```
+Function GetAvailableQuests() -> TArray<FString>
+└── Return AvailableQuests
+```
+
+### GetReputation() -> Float
+```
+Function GetReputation() -> Float
+└── Return Reputation
+```
+
+### GetCurrentState() -> ENPCDialogueState
+```
+Function GetCurrentState() -> ENPCDialogueState
+└── Return CurrentState
+```
+```
